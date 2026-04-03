@@ -1,0 +1,23 @@
+.env
+.env.*
+node_modules/
+npm-debug.log*
+
+logs/
+*.log
+
+dist/
+build/
+tmp/
+*.tgz
+.DS_Store
+.vscode/
+.idea/
+
+# Docker volumes / Postgres data
+postgres_data_folder/
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

@@ -1,0 +1,482 @@
+openapi: 3.0.3
+info:
+  title: Commerce Microservices (Combined)
+  version: 1.0.0
+  description: OpenAPI spec covering core endpoints for user, product, cart, order, payment and auth services (minimal schemas).
+servers:
+  - url: http://localhost
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+    RegisterRequest:
+      type: object
+      required: [firstname, lastname, email, password]
+      properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        refreshToken:
+          type: string
+        accessToken:
+          type: string
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        stock:
+          type: integer
+        description:
+          type: string
+        categoryId:
+          type: integer
+    CartItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+
+paths:
+  /register:
+    post:
+      summary: Register a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "200":
+          description: User created with OTP code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  code:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /verify:
+    post:
+      summary: Verify OTP and activate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "200":
+          description: Account verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /get-otp:
+    post:
+      summary: Re-send OTP to email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /login:
+    post:
+      summary: Authenticate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /products:
+    get:
+      summary: List products
+      responses:
+        "200":
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+    post:
+      summary: Add product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, price, stock, categoryId]
+              properties:
+                name:
+                  type: string
+                price:
+                  type: number
+                stock:
+                  type: integer
+                description:
+                  type: string
+                categoryId:
+                  type: integer
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  product:
+                    $ref: "#/components/schemas/Product"
+
+  /products/{productId}:
+    get:
+      summary: Get a product
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  product:
+                    $ref: "#/components/schemas/Product"
+    patch:
+      summary: Edit a product
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                price:
+                  type: number
+                stock:
+                  type: integer
+                description:
+                  type: string
+                newCategoryId:
+                  type: integer
+      responses:
+        "200":
+          description: Product updated
+
+  /products/{productId}/stock:
+    get:
+      summary: Check product stock and price
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  stock:
+                    type: integer
+                  price:
+                    type: number
+
+  /categories:
+    get:
+      summary: List categories
+      responses:
+        "200":
+          description: Categories
+    post:
+      summary: Add category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryName]
+              properties:
+                categoryName:
+                  type: string
+    delete:
+      summary: Delete category (move products to Uncategorized)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryId]
+              properties:
+                categoryId:
+                  type: integer
+
+  /cart/add:
+    post:
+      summary: Add item to cart
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, quantity]
+              properties:
+                productId:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        "200":
+          description: Item added
+
+  /cart/view:
+    get:
+      summary: View cart
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cart contents
+
+  /cart/remove:
+    delete:
+      summary: Remove item from cart
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId]
+              properties:
+                productId:
+                  type: string
+
+  /cart/checkout:
+    post:
+      summary: Checkout cart and publish order event
+      parameters:
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: x-email
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Checkout initiated
+
+  /update-status:
+    post:
+      summary: Admin update order status
+      parameters:
+        - name: x-user-role
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId, status]
+              properties:
+                orderId:
+                  type: string
+                status:
+                  type: string
+                  enum: [cancelled, shipped, delivered]
+      responses:
+        "200":
+          description: Order updated
+
+  /payment/make-payment/{paymentId}:
+    post:
+      summary: Initialize payment with Paystack
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Authorization_url:
+                    type: string
+
+  /payment/webhook:
+    post:
+      summary: Paystack webhook receiver
+      parameters:
+        - name: x-paystack-signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Webhook processed
+
+  /validate:
+    post:
+      summary: Validate JWT token (Auth service)
+      requestBody: {}
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Token valid (identity returned in headers)
+        "401":
+          description: Unauthorized
+
+security:
+  - bearerAuth: []
