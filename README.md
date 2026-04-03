@@ -15,7 +15,7 @@ Quick start
 - From the workspace root run:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 How to use
