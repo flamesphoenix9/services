@@ -9,7 +9,6 @@ build/
 tmp/
 *.tgz
 .DS_Store
-.vscode/
 .idea/
 
 # Docker volumes / Postgres data
