@@ -1,4 +1,4 @@
-# Commerce Microservices — Overview
+# E-Commerce Microservices — Overview
 
 Lightweight documentation index for the local microservices in this workspace. Click a service below to open its service README.
 
